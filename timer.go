@@ -1,48 +1,78 @@
 package timing
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
-// Timer consists of a schedule and the func to execute on that schedule.
-type Timer struct {
-	// The index of the object's key in the Heap.queue.
-	index int
-	// next time the job will run, or the zero time if Base has not been
-	// started or this entry is unsatisfiable
-	next time.Time
-	// job is the thing that want to run.
-	job Job
-	// use goroutine
-	useGoroutine bool
+var defaultTimer = New()
+var once sync.Once
+
+func lazyInit() {
+	once.Do(func() {
+		defaultTimer.Run()
+	})
+
 }
 
-// NewTimer new timer
-func NewTimer() *Timer {
-	return &Timer{job: emptyJob{}}
+// Location gets the time zone location
+func Location() *time.Location {
+	return defaultTimer.Location()
 }
 
-// NewJob new timer with job.
-func NewJob(job Job) *Timer {
-	return NewTimer().WithJob(job)
+// Close the time
+func Close() error {
+	return defaultTimer.Close()
 }
 
-// NewJobFunc new timer with job function.
-func NewJobFunc(f func()) *Timer {
-	return NewTimer().WithJobFunc(f)
+// HasRunning 运行状态
+func HasRunning() bool {
+	return defaultTimer.HasRunning()
 }
 
-// WithGoroutine with goroutine
-func (sf *Timer) WithGoroutine() *Timer {
-	sf.useGoroutine = true
-	return sf
+// Entries returns a snapshot of the Timing entries.
+func Entries() []Entry {
+	return defaultTimer.Entries()
 }
 
-// WithJob with job.
-func (sf *Timer) WithJob(job Job) *Timer {
-	sf.job = job
-	return sf
+// AddJob add a job
+func AddJob(job Job, num uint32, interval time.Duration) *Entry {
+	lazyInit()
+	return defaultTimer.AddJob(job, num, interval)
 }
 
-// WithJobFunc with job function
-func (sf *Timer) WithJobFunc(f func()) *Timer {
-	return sf.WithJob(JobFunc(f))
+// AddJobFunc add a job function
+func AddJobFunc(f JobFunc, num uint32, interval time.Duration) *Entry {
+	return AddJob(f, num, interval)
+}
+
+// AddOneShotJob  add one-shot job
+func AddOneShotJob(job Job, interval time.Duration) *Entry {
+	return AddJob(job, OneShot, interval)
+}
+
+// AddOneShotJobFunc add one-shot job function
+func AddOneShotJobFunc(f JobFunc, interval time.Duration) *Entry {
+	return AddJob(f, OneShot, interval)
+}
+
+// AddPersistJob add persist job
+func AddPersistJob(job Job, interval time.Duration) *Entry {
+	return AddJob(job, Persist, interval)
+}
+
+// AddPersistJobFunc add persist job function
+func AddPersistJobFunc(f JobFunc, interval time.Duration) *Entry {
+	return AddJob(f, Persist, interval)
+}
+
+// Start start the entry
+func Start(e *Entry, newInterval ...time.Duration) {
+	lazyInit()
+	defaultTimer.Start(e, newInterval...)
+}
+
+// Remove entry form timing
+func Remove(e *Entry) {
+	defaultTimer.Remove(e)
 }

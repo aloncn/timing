@@ -9,15 +9,6 @@ type Job interface {
 type JobFunc func()
 
 // Run implement job interface
-func (f JobFunc) Run() { f() }
-
-func wrapJob(job Job) {
-	defer func() {
-		_ = recover()
-	}()
-	job.Run()
+func (sf JobFunc) Run() {
+	sf()
 }
-
-type emptyJob struct{}
-
-func (emptyJob) Run() {}

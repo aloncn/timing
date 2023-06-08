@@ -1,27 +1,31 @@
 package main
 
 import (
-	"log"
 	"time"
 
-	"github.com/things-labs/timing"
+	"github.com/thinkgos/timing"
 )
 
 func main() {
-	base := timing.New().Run()
+	var tm *timing.Entry
+	t := timing.New(timing.WithGoroutine(false),
+		timing.WithEnableLogger()).Run()
+	defer t.Close()
+	t.AddPersistJob(timing.JobFunc(func() {
+	}), time.Second*1)
+	t.AddPersistJob(timing.JobFunc(func() {
+	}), time.Second*1)
+	t.AddPersistJob(timing.JobFunc(func() {
+	}), time.Second*1)
+	t.AddPersistJob(timing.JobFunc(func() {
+	}), time.Second*1)
+	t.AddPersistJob(timing.JobFunc(func() {
+	}), time.Second*1)
+	tm = timing.NewEntry(timing.JobFunc(func() {
+		t.Start(tm)
+	}), timing.OneShot, time.Second*2)
+	t.Start(tm)
 
-	tm := timing.NewTimer()
-	tm.WithJobFunc(func() {
-		log.Println("hello 7")
-		base.Add(tm, time.Second*7)
-	})
+	select {}
 
-	tm1 := timing.NewTimer()
-	tm1.WithJobFunc(func() {
-		log.Println("hello 5")
-		base.Add(tm1, time.Second*5)
-	})
-	base.Add(tm, time.Second*7)
-	base.Add(tm1, time.Second*5)
-	time.Sleep(time.Second * 60)
 }
